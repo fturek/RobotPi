@@ -1,26 +1,30 @@
 package com.example.robotpi.ui.main
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.AlertDialog
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
+import android.view.*
+import android.widget.CompoundButton
 import androidx.fragment.app.Fragment
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
 import com.example.robotpi.R
 import com.example.robotpi.api.RobotService
+import com.example.robotpi.sharedprefs.SharedPrefs
+import com.example.robotpi.utils.AlertHelper
+import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
+import com.google.android.exoplayer2.util.Util
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.main_fragment.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
-import android.util.Log
-import android.view.*
-import android.widget.CompoundButton
-import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.util.Util
-
 
 class MainFragment : Fragment(), Callback<Unit>,
     CompoundButton.OnCheckedChangeListener, View.OnTouchListener {
@@ -29,12 +33,18 @@ class MainFragment : Fragment(), Callback<Unit>,
 
     private lateinit var player: SimpleExoPlayer
     private lateinit var dataSourceFactory: DefaultDataSourceFactory
+    private lateinit var savedLocalApi: String
+    private lateinit var progressDialog: AlertDialog
 
     companion object {
         fun newInstance() = MainFragment()
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         setHasOptionsMenu(true)
         return inflater.inflate(R.layout.main_fragment, container, false)
     }
@@ -42,7 +52,9 @@ class MainFragment : Fragment(), Callback<Unit>,
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        val raspberryLocalHost = "http://192.168.0.108:8000/"
+        savedLocalApi = SharedPrefs.readLocalhost(context as Activity) ?: return
+
+        val raspberryLocalHost = "http://$savedLocalApi:8000/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(raspberryLocalHost)
@@ -52,13 +64,14 @@ class MainFragment : Fragment(), Callback<Unit>,
 
         player = SimpleExoPlayer.Builder(context!!).build()
 
-
         video_player.player = player
 
         dataSourceFactory = DefaultDataSourceFactory(
             context,
             Util.getUserAgent(context!!, "RobotPi")
         )
+
+        progressDialog = AlertHelper.setProgressDialog(context!!, "Loading")
 
         button_drive_forward.setOnTouchListener(this)
         button_drive_backwards.setOnTouchListener(this)
@@ -73,6 +86,13 @@ class MainFragment : Fragment(), Callback<Unit>,
         super.onCreateOptionsMenu(menu, inflater)
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        val item = menu.findItem(R.id.menu_ip)
+        item.title = savedLocalApi
+
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // Handle item selection
         return when (item.itemId) {
@@ -81,8 +101,11 @@ class MainFragment : Fragment(), Callback<Unit>,
                     return super.onOptionsItemSelected(item)
                 }
                 MaterialDialog(context!!).show {
-                    input()
-                    positiveButton(R.string.alert_local_host_set)
+                    val savedLocalApi = SharedPrefs.readLocalhost(activity!!)
+                    input(hint = savedLocalApi) { _, text ->
+                        SharedPrefs.saveLocalhost(activity!!, text.toString())
+                    }
+                    positiveButton(R.string.dialog_local_host_set)
                 }
                 true
             }
@@ -90,6 +113,11 @@ class MainFragment : Fragment(), Callback<Unit>,
                 service
                     .deviceTurnOff()
                     .enqueue(this)
+
+                Snackbar
+                    .make(activity!!.findViewById(R.id.container), R.string.alert_raspberry_turned_off, Snackbar.LENGTH_SHORT)
+                    .show()
+
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -139,47 +167,55 @@ class MainFragment : Fragment(), Callback<Unit>,
     }
 
     override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
+        progressDialog.show()
+
         when (isChecked) {
             false -> {
-//                service
-//                    .cameraTurnOff()
-//                    .enqueue(object : Callback<Unit> {
-//                        override fun onFailure(call: Call<Unit>, t: Throwable) {
-//                            text_view_camera_info.setText(R.string.switch_camera_off_text)
-//                            video_player.stopPlayback()
-//                        }
-//
-//                        override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
-//                            text_view_camera_info.setText(R.string.switch_camera_off_text)
-//                            video_player.stopPlayback()
-//                        }
-//
-//                    })
+                service
+                    .cameraTurnOff()
+                    .enqueue(object : Callback<Unit> {
+                        override fun onFailure(call: Call<Unit>, t: Throwable) {
+                            text_view_camera_info.setText(R.string.switch_camera_off_text)
+                            player.stop()
+                            progressDialog.hide()
+                            switch_camera.isChecked = false
+                        }
+
+                        override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                            text_view_camera_info.setText(R.string.switch_camera_off_text)
+                            player.stop()
+                            progressDialog.hide()
+                            switch_camera.isChecked = false
+                        }
+
+                    })
             }
 
             true -> {
-                val uri = Uri.parse("http://techslides.com/demos/sample-videos/small.mp4")
+                service
+                    .cameraTurnOn()
+                    .enqueue(object : Callback<Unit> {
+                        override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                            text_view_camera_info.setText(R.string.switch_camera_on_text)
+                            val uri =
+                                Uri.parse("http://techslides.com/demos/sample-videos/small.mp4")
 
-                // This is the MediaSource representing the media to be played.
-                val videoSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-                    .createMediaSource(uri)
-                // Prepare the player with the source.
-                player.prepare(videoSource)
+                            // This is the MediaSource representing the media to be played.
+                            val videoSource = ProgressiveMediaSource.Factory(dataSourceFactory)
+                                .createMediaSource(uri)
+                            // Prepare the player with the source.
+                            player.prepare(videoSource)
+                            progressDialog.hide()
+                            switch_camera.isChecked = true
+                        }
 
-//                service
-//                    .cameraTurnOn()
-//                    .enqueue(object : Callback<Unit> {
-//                        override fun onFailure(call: Call<Unit>, t: Throwable) {
-//                            text_view_camera_info.setText(R.string.switch_camera_off_text)
-//                            video_player.stopPlayback()
-//                        }
-//
-//                        override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
-//                            text_view_camera_info.setText(R.string.switch_camera_on_text)
-//
-//                        }
-//                    })
-
+                        override fun onFailure(call: Call<Unit>, t: Throwable) {
+                            text_view_camera_info.setText(R.string.switch_camera_off_text)
+                            player.stop()
+                            progressDialog.hide()
+                            switch_camera.isChecked = false
+                        }
+                    })
             }
         }
     }
@@ -191,5 +227,4 @@ class MainFragment : Fragment(), Callback<Unit>,
     override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
         Log.e("RobotPi", "Success ! ")
     }
-
 }
