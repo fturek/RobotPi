@@ -1,3 +1,21 @@
 <resources>
     <string name="app_name">RobotPi</string>
+
+    <string name="switch_camera_on_text">Kamera wlaczona</string>
+    <string name="switch_camera_off_text">Kamera wylaczona</string>
+    <string name="switch_lights_on_text">Swiatla wlaczone</string>
+    <string name="switch_lights_off_text">Swiatla wylaczone</string>
+
+    <string name="button_drive_forward_text">Do przodu</string>
+    <string name="button_drive_backwards_text">Do tylu</string>
+    <string name="button_drive_left_text">W lewo</string>
+    <string name="button_drive_right_text">W prawo</string>
+
+    <string name="shared_prefs_local_host_key">SHARED_PREFS_LOCAL_HOST_KEY</string>
+    <string name="local_host_default_value">192.168.0.108</string>
+
+    <string name="alert_local_host_set">Ustaw ip</string>
+
+    <string name="menu_button_set_local_host">Ustaw ip</string>
+    <string name="menu_button_turn_off_device">Wylacz raspberry</string>
 </resources>

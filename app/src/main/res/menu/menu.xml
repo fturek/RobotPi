@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_button_set_localhost"
+        android:title="@string/menu_button_set_local_host" />
+    <item
+        android:id="@+id/menu_button_turn_off_device"
+        android:title="@string/menu_button_turn_off_device" />
+</menu>
