@@ -45,4 +45,6 @@ dependencies {
 
     implementation 'com.google.android.exoplayer:exoplayer:2.11.0'
     implementation 'com.google.android.material:material:1.0.0'
+
+    implementation 'de.mrmaffen:vlc-android-sdk:2.0.6'
 }

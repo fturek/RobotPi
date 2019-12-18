@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168.0.108</domain>
-        <!-- TODO remove this -->
-        <domain includeSubdomains="true">techslides.com</domain>
-    </domain-config>
-</network-security-config>

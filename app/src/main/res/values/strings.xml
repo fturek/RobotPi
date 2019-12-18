@@ -20,5 +20,6 @@
     <string name="menu_button_turn_off_device">Wylacz raspberry</string>
 
     <string name="alert_raspberry_turned_off">Urzadzenie wyłączone</string>
+    <string name="alert_raspberry_host_set">localhost ustawiony</string>
 
 </resources>
