@@ -12,7 +12,7 @@
     <string name="button_drive_right_text">W prawo</string>
 
     <string name="shared_prefs_local_host_key">SHARED_PREFS_LOCAL_HOST_KEY</string>
-    <string name="local_host_default_value">192.168.0.108</string>
+    <string name="local_host_default_value">192.168.0.24</string>
 
     <string name="dialog_local_host_set">Ustaw ip</string>
 

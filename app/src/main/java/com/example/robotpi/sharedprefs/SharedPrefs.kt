@@ -16,7 +16,8 @@ class SharedPrefs {
         }
 
         fun readLocalhost(activity: Activity): String? {
-            val sharedPref = activity.getPreferences(Context.MODE_PRIVATE) ?: return activity.getString(R.string.local_host_default_value)
+            val sharedPref = activity.getPreferences(Context.MODE_PRIVATE)
+                ?: return activity.getString(R.string.local_host_default_value)
             return sharedPref.getString(
                 activity.getString(R.string.shared_prefs_local_host_key),
                 activity.getString(R.string.local_host_default_value)

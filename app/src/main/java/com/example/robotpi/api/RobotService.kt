@@ -3,8 +3,6 @@ package com.example.robotpi.api
 import retrofit2.Call
 import retrofit2.http.GET
 
-
-
 interface RobotService {
 
     @GET("robocik/prosto")

@@ -3,12 +3,9 @@ package com.example.robotpi.ui.main
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
-import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
 import android.view.*
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.CompoundButton
 import androidx.fragment.app.Fragment
 import com.afollestad.materialdialogs.MaterialDialog
@@ -19,7 +16,6 @@ import com.example.robotpi.sharedprefs.SharedPrefs
 import com.example.robotpi.utils.AlertHelper
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.main_fragment.*
-import kotlinx.coroutines.delay
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -236,5 +232,4 @@ class MainFragment : Fragment(), Callback<Unit>,
     override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
         Log.e("RobotPi", "Success ! ")
     }
-
 }
